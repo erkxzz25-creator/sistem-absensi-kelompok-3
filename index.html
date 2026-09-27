@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="FaceSync - Sistem Absensi Pintar berbasis Pengenalan Wajah">
+    <title>FaceSync - Absensi Pintar</title>
+    
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="ri-focus-3-line"></i>
+                </div>
+                <span>FaceSync</span>
+            </div>
+            
+            <nav class="nav-menu">
+                <div class="nav-label">Data Utama</div>
+                <button class="nav-item active" data-target="students">
+                    <i class="ri-group-line"></i>
+                    <span>Mahasiswa</span>
+                </button>
+                
+                <div class="nav-label mt-4">Operasional</div>
+                <button class="nav-item" data-target="live-attendance">
+                    <i class="ri-camera-lens-line"></i>
+                    <span>Sesi Absensi</span>
+                    <span class="badge pulse">Live</span>
+                </button>
+                <button class="nav-item" data-target="face-registration">
+                    <i class="ri-user-add-line"></i>
+                    <span>Registrasi Wajah</span>
+                </button>
+                
+                <div class="nav-label mt-4">Layanan Mandiri</div>
+                <button class="nav-item" data-target="student-history">
+                    <i class="ri-history-line"></i>
+                    <span>Riwayat Saya</span>
+                </button>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <div class="status-indicator"></div>
+                    <span>Sistem Online</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="topbar">
+                <div class="page-title">
+                    <h1 id="current-page-title">Data Mahasiswa</h1>
+                    <p class="subtitle" id="current-page-subtitle">Kelola data mahasiswa terdaftar</p>
+                </div>
+                
+                <div class="header-actions">
+                    <!-- Bagian profil dosen dihapus karena aplikasi menggunakan satu alur terpadu -->
+                </div>
+            </header>
+
+            <!-- Views Container -->
+            <div class="views-container">
+                
+                <!-- 1. Students View (Now Default) -->
+                <div id="students" class="view active">
+                    <div class="view-header-actions">
+                        <div class="search-bar glass-input">
+                            <i class="ri-search-line"></i>
+                            <input type="text" placeholder="Cari berdasarkan NIM atau Nama...">
+                        </div>
+                        <button class="btn btn-primary" onclick="app.navigateTo('face-registration')">
+                            <i class="ri-user-add-line"></i> Tambah Mahasiswa
+                        </button>
+                    </div>
+                    
+                    <div class="table-container glass-card">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>NIM</th>
+                                    <th>Nama</th>
+                                    <th>Kelas</th>
+                                    <th>Data Wajah</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>10119001</td>
+                                    <td>
+                                        <div class="student-name-cell">
+                                            <img src="https://ui-avatars.com/api/?name=Ahmad+Fauzi&background=random" class="avatar-small">
+                                            <span>Ahmad Fauzi</span>
+                                        </div>
+                                    </td>
+                                    <td>IF-1</td>
+                                    <td><span class="badge badge-success"><i class="ri-check-line"></i> Terdaftar</span></td>
+                                    <td>
+                                        <button class="icon-btn-small" title="Edit"><i class="ri-edit-line"></i></button>
+                                        <button class="icon-btn-small danger" title="Hapus"><i class="ri-delete-bin-line"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>10119002</td>
+                                    <td>
+                                        <div class="student-name-cell">
+                                            <img src="https://ui-avatars.com/api/?name=Budi+Santoso&background=random" class="avatar-small">
+                                            <span>Budi Santoso</span>
+                                        </div>
+                                    </td>
+                                    <td>IF-1</td>
+                                    <td><span class="badge badge-warning"><i class="ri-error-warning-line"></i> Belum Ada</span></td>
+                                    <td>
+                                        <button class="icon-btn-small" title="Edit"><i class="ri-edit-line"></i></button>
+                                        <button class="icon-btn-small danger" title="Hapus"><i class="ri-delete-bin-line"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 2. Live Attendance View -->
+                <div id="live-attendance" class="view">
+                    <div class="live-attendance-container">
+                        <div class="camera-section glass-card">
+                            <div class="camera-header">
+                                <h2>Sesi Absensi Aktif</h2>
+                                <div class="camera-status live">
+                                    <span class="dot"></span> Deteksi Langsung
+                                </div>
+                            </div>
+                            
+                            <div class="camera-viewfinder" id="camera-viewfinder">
+                                <video id="webcam-feed" autoplay playsinline></video>
+                                <div class="scanning-overlay">
+                                    <div class="scan-line"></div>
+                                    <div class="corners">
+                                        <span class="tl"></span><span class="tr"></span>
+                                        <span class="bl"></span><span class="br"></span>
+                                    </div>
+                                </div>
+                                <div class="camera-placeholder" id="camera-placeholder">
+                                    <i class="ri-camera-off-line"></i>
+                                    <p>Kamera sedang mati</p>
+                                    <button class="btn btn-primary mt-3" id="btn-start-camera">
+                                        <i class="ri-play-line"></i> Nyalakan Kamera
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="camera-controls">
+                                <button class="btn btn-danger btn-block" id="btn-stop-session">
+                                    <i class="ri-stop-circle-line"></i> Akhiri Sesi
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="recognition-log glass-card">
+                            <div class="card-header">
+                                <h2>Deteksi Terakhir</h2>
+                                <span class="badge badge-primary" id="present-count">0 Hadir</span>
+                            </div>
+                            
+                            <div class="log-list" id="recognition-log-list">
+                                <!-- Log items will be added here -->
+                                <div class="log-item empty-state">
+                                    <i class="ri-scan-2-line"></i>
+                                    <p>Menunggu deteksi wajah...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Face Registration View -->
+                <div id="face-registration" class="view">
+                    <div class="registration-layout">
+                        <div class="registration-form glass-card">
+                            <h2>Informasi Mahasiswa</h2>
+                            <p class="text-muted mb-4">Masukkan detail mahasiswa sebelum mengambil data wajah.</p>
+                            
+                            <div class="form-group">
+                                <label for="reg-nim">NIM</label>
+                                <input type="text" id="reg-nim" class="glass-input-field" placeholder="Masukkan NIM">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="reg-name">Nama Lengkap</label>
+                                <input type="text" id="reg-name" class="glass-input-field" placeholder="Masukkan nama lengkap">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="reg-class">Kelas/Grup</label>
+                                <input type="text" id="reg-class" class="glass-input-field" placeholder="mis., IF-1">
+                            </div>
+                            
+                            <div class="form-actions mt-4">
+                                <button class="btn btn-outline" onclick="app.navigateTo('students')">Batal</button>
+                                <button class="btn btn-primary" id="btn-proceed-capture">Lanjut Ambil Foto <i class="ri-arrow-right-line"></i></button>
+                            </div>
+                        </div>
+                        
+                        <div class="registration-capture glass-card disabled" id="reg-capture-section">
+                            <h2>Pengambilan Wajah</h2>
+                            <p class="text-muted mb-4">Ambil 3-5 foto untuk pengenalan yang akurat.</p>
+                            
+                            <div class="capture-viewfinder">
+                                <video id="reg-webcam" autoplay playsinline></video>
+                                <div class="camera-placeholder" id="reg-camera-placeholder">
+                                    <i class="ri-camera-off-line"></i>
+                                    <p>Isi form untuk mengaktifkan kamera</p>
+                                </div>
+                            </div>
+                            
+                            <div class="capture-progress">
+                                <span>Foto Diambil:</span>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar" style="width: 0%" id="capture-progress-bar"></div>
+                                </div>
+                                <span id="capture-count">0/5</span>
+                            </div>
+                            
+                            <button class="btn btn-primary btn-block" id="btn-capture-photo" disabled>
+                                <i class="ri-camera-lens-line"></i> Ambil Foto
+                            </button>
+                            
+                            <button class="btn btn-success btn-block mt-3" id="btn-save-registration" style="display: none;">
+                                <i class="ri-save-line"></i> Simpan Data Wajah
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Student History View -->
+                <div id="student-history" class="view">
+                    <div class="history-search-container glass-card mb-4">
+                        <div class="history-search">
+                            <div class="search-icon-large">
+                                <i class="ri-user-search-line"></i>
+                            </div>
+                            <div class="search-content">
+                                <h2>Cek Absensi Anda</h2>
+                                <p>Masukkan NIM Anda untuk melihat riwayat kehadiran Anda.</p>
+                                <div class="search-input-group mt-3">
+                                    <input type="text" id="history-nim" class="glass-input-field" placeholder="Masukkan NIM (mis., 10119001)">
+                                    <button class="btn btn-primary" id="btn-check-history">Cek Riwayat</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="history-results glass-card" id="history-results" style="display: none;">
+                        <div class="student-profile-header">
+                            <img src="https://ui-avatars.com/api/?name=Ahmad+Fauzi&background=6366f1&color=fff&size=80" alt="Student">
+                            <div class="profile-info">
+                                <h2>Ahmad Fauzi</h2>
+                                <p>NIM: 10119001 | Kelas: IF-1</p>
+                            </div>
+                            <div class="attendance-summary">
+                                <div class="summary-item">
+                                    <span class="label">Total Sesi Diikuti</span>
+                                    <span class="value">14</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="label">Hadir</span>
+                                    <span class="value text-success">12</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="label">Persentase</span>
+                                    <span class="value">85.7%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h3 class="mt-4 mb-3">Catatan Kehadiran</h3>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>Waktu Tercatat</th>
+                                        <th>Status</th>
+                                        <th>Metode</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>28 Sep 2026</td>
+                                        <td>10:05 WIB</td>
+                                        <td><span class="badge badge-success">Hadir</span></td>
+                                        <td>Pengenalan Wajah</td>
+                                    </tr>
+                                    <tr>
+                                        <td>21 Sep 2026</td>
+                                        <td>-</td>
+                                        <td><span class="badge badge-danger">Alpa</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>14 Sep 2026</td>
+                                        <td>10:02 WIB</td>
+                                        <td><span class="badge badge-success">Hadir</span></td>
+                                        <td>Pengenalan Wajah</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
