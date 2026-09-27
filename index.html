@@ -29,8 +29,16 @@
             </div>
             
             <nav class="nav-menu">
-                <div class="nav-label">Data Utama</div>
-                <button class="nav-item active" data-target="students">
+                <div class="nav-label">Menu Utama</div>
+                <button class="nav-item active" data-target="dashboard">
+                    <i class="ri-dashboard-line"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" data-target="sessions">
+                    <i class="ri-calendar-event-line"></i>
+                    <span>Pertemuan</span>
+                </button>
+                <button class="nav-item" data-target="students">
                     <i class="ri-group-line"></i>
                     <span>Mahasiswa</span>
                 </button>
@@ -66,8 +74,8 @@
             <!-- Top Header -->
             <header class="topbar">
                 <div class="page-title">
-                    <h1 id="current-page-title">Data Mahasiswa</h1>
-                    <p class="subtitle" id="current-page-subtitle">Kelola data mahasiswa terdaftar</p>
+                    <h1 id="current-page-title">Dashboard</h1>
+                    <p class="subtitle" id="current-page-subtitle">Ringkasan sistem absensi Anda</p>
                 </div>
                 
                 <div class="header-actions">
@@ -78,8 +86,156 @@
             <!-- Views Container -->
             <div class="views-container">
                 
-                <!-- 1. Students View (Now Default) -->
-                <div id="students" class="view active">
+                <!-- 1. Dashboard View -->
+                <div id="dashboard" class="view active">
+                    <div class="stats-grid">
+                        <div class="stat-card glass-card">
+                            <div class="stat-icon purple">
+                                <i class="ri-group-line"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3>Total Mahasiswa</h3>
+                                <p class="stat-number">124</p>
+                                <span class="stat-trend positive"><i class="ri-arrow-up-line"></i> 12 minggu ini</span>
+                            </div>
+                        </div>
+                        <div class="stat-card glass-card">
+                            <div class="stat-icon emerald">
+                                <i class="ri-check-double-line"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3>Rata-rata Kehadiran</h3>
+                                <p class="stat-number">92%</p>
+                                <span class="stat-trend positive"><i class="ri-arrow-up-line"></i> 2.4%</span>
+                            </div>
+                        </div>
+                        <div class="stat-card glass-card">
+                            <div class="stat-icon blue">
+                                <i class="ri-calendar-check-line"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3>Total Pertemuan</h3>
+                                <p class="stat-number">48</p>
+                                <span class="stat-trend neutral"><i class="ri-subtract-line"></i> 0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-content-grid">
+                        <div class="recent-sessions glass-card">
+                            <div class="card-header">
+                                <h2>Pertemuan Terakhir</h2>
+                                <button class="btn-text">Lihat Semua</button>
+                            </div>
+                            <div class="session-list">
+                                <!-- Session items -->
+                                <div class="session-item">
+                                    <div class="session-date">
+                                        <span class="day">28</span>
+                                        <span class="month">Sep</span>
+                                    </div>
+                                    <div class="session-info">
+                                        <h4>Web Development - Pertemuan 4</h4>
+                                        <p>10:00 - 12:00 WIB</p>
+                                    </div>
+                                    <div class="session-status closed">Selesai</div>
+                                    <div class="session-attendance">42/45</div>
+                                </div>
+                                <div class="session-item">
+                                    <div class="session-date">
+                                        <span class="day">25</span>
+                                        <span class="month">Sep</span>
+                                    </div>
+                                    <div class="session-info">
+                                        <h4>Web Development - Pertemuan 3</h4>
+                                        <p>10:00 - 12:00 WIB</p>
+                                    </div>
+                                    <div class="session-status closed">Selesai</div>
+                                    <div class="session-attendance">44/45</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="quick-actions glass-card">
+                            <div class="card-header">
+                                <h2>Aksi Cepat</h2>
+                            </div>
+                            <div class="actions-grid">
+                                <button class="action-btn" onclick="app.navigateTo('live-attendance')">
+                                    <i class="ri-play-circle-line"></i>
+                                    <span>Mulai Sesi</span>
+                                </button>
+                                <button class="action-btn" onclick="app.navigateTo('face-registration')">
+                                    <i class="ri-user-add-line"></i>
+                                    <span>Daftar Wajah</span>
+                                </button>
+                                <button class="action-btn" onclick="app.navigateTo('sessions')">
+                                    <i class="ri-add-circle-line"></i>
+                                    <span>Pertemuan Baru</span>
+                                </button>
+                                <button class="action-btn" onclick="app.navigateTo('students')">
+                                    <i class="ri-file-download-line"></i>
+                                    <span>Ekspor Data</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Sessions View -->
+                <div id="sessions" class="view">
+                    <div class="view-header-actions">
+                        <div class="search-bar glass-input">
+                            <i class="ri-search-line"></i>
+                            <input type="text" placeholder="Cari pertemuan...">
+                        </div>
+                        <button class="btn btn-primary">
+                            <i class="ri-add-line"></i> Buat Pertemuan
+                        </button>
+                    </div>
+                    
+                    <div class="table-container glass-card">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Judul Pertemuan</th>
+                                    <th>Tanggal</th>
+                                    <th>Waktu</th>
+                                    <th>Status</th>
+                                    <th>Kehadiran</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Web Development - Pertemuan 5</td>
+                                    <td>Hari Ini</td>
+                                    <td>10:00 - 12:00</td>
+                                    <td><span class="badge badge-success">Aktif</span></td>
+                                    <td>12/45</td>
+                                    <td>
+                                        <button class="icon-btn-small" title="Lihat"><i class="ri-eye-line"></i></button>
+                                        <button class="icon-btn-small" title="Edit"><i class="ri-edit-line"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Web Development - Pertemuan 4</td>
+                                    <td>28 Sep 2026</td>
+                                    <td>10:00 - 12:00</td>
+                                    <td><span class="badge badge-neutral">Selesai</span></td>
+                                    <td>42/45</td>
+                                    <td>
+                                        <button class="icon-btn-small" title="Lihat"><i class="ri-eye-line"></i></button>
+                                        <button class="icon-btn-small" title="Ekspor"><i class="ri-download-2-line"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 3. Students View -->
+                <div id="students" class="view">
                     <div class="view-header-actions">
                         <div class="search-bar glass-input">
                             <i class="ri-search-line"></i>
@@ -137,7 +293,7 @@
                     </div>
                 </div>
 
-                <!-- 2. Live Attendance View -->
+                <!-- 4. Live Attendance View -->
                 <div id="live-attendance" class="view">
                     <div class="live-attendance-container">
                         <div class="camera-section glass-card">
@@ -190,7 +346,7 @@
                     </div>
                 </div>
 
-                <!-- 3. Face Registration View -->
+                <!-- 5. Face Registration View -->
                 <div id="face-registration" class="view">
                     <div class="registration-layout">
                         <div class="registration-form glass-card">
@@ -249,7 +405,7 @@
                     </div>
                 </div>
 
-                <!-- 4. Student History View -->
+                <!-- 6. Student History View -->
                 <div id="student-history" class="view">
                     <div class="history-search-container glass-card mb-4">
                         <div class="history-search">

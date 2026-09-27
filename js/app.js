@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Application State
     const state = {
-        currentView: 'students', // Default view is now students
+        currentView: 'dashboard',
         cameraStream: null,
         isSessionActive: false,
         registrationImages: 0,
@@ -18,6 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Page Metadata
     const pageMeta = {
+        'dashboard': { title: 'Dashboard', subtitle: 'Ringkasan sistem absensi Anda' },
+        'sessions': { title: 'Kelola Pertemuan', subtitle: 'Buat dan pantau sesi kelas' },
         'students': { title: 'Data Mahasiswa', subtitle: 'Kelola data mahasiswa terdaftar' },
         'live-attendance': { title: 'Sesi Absensi', subtitle: 'Sesi pengenalan wajah otomatis' },
         'face-registration': { title: 'Registrasi Wajah', subtitle: 'Daftarkan data wajah mahasiswa baru' },
