@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaceSync Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css?v=7">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon"><i class="ri-focus-3-line"></i></div>
+                <span>FaceSync Admin</span>
+            </div>
+            
+            <nav class="nav-menu">
+                <div class="nav-label">Manajemen</div>
+                <button class="nav-item active" data-target="dashboard" onclick="app.navigateTo('dashboard')">
+                    <i class="ri-dashboard-line"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" data-target="sessions" onclick="app.navigateTo('sessions')">
+                    <i class="ri-calendar-event-line"></i>
+                    <span>Pertemuan</span>
+                </button>
+                <button class="nav-item" data-target="students" onclick="app.navigateTo('students')">
+                    <i class="ri-group-line"></i>
+                    <span>Mahasiswa</span>
+                </button>
+                <button class="nav-item" data-target="face-registration" onclick="app.navigateTo('face-registration')">
+                    <i class="ri-user-add-line"></i>
+                    <span>Registrasi Wajah</span>
+                </button>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <div class="status-indicator"></div>
+                    <span>Sistem Online</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="topbar">
+                <div class="page-title">
+                    <h1 id="current-page-title">Dashboard</h1>
+                    <p class="subtitle" id="current-page-subtitle">Ringkasan sistem absensi Anda</p>
+                </div>
+            </header>
+
+            <div class="views-container">
+                <!-- Dashboard View -->
+                <div id="dashboard" class="view active">
+                    <div class="stats-grid">
+                        <div class="stat-card glass-card">
+                            <div class="stat-icon purple"><i class="ri-group-line"></i></div>
+                            <div class="stat-details">
+                                <h3>Total Mahasiswa</h3>
+                                <p class="stat-number">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card glass-card">
+                            <div class="stat-icon emerald"><i class="ri-check-double-line"></i></div>
+                            <div class="stat-details">
+                                <h3>Rata-rata Kehadiran</h3>
+                                <p class="stat-number">0%</p>
+                            </div>
+                        </div>
+                        <div class="stat-card glass-card">
+                            <div class="stat-icon blue"><i class="ri-calendar-check-line"></i></div>
+                            <div class="stat-details">
+                                <h3>Total Pertemuan</h3>
+                                <p class="stat-number">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-content-grid">
+                        <div class="recent-sessions glass-card">
+                            <div class="card-header">
+                                <h2>Pertemuan Terakhir</h2>
+                                <button class="btn-text" onclick="app.navigateTo('sessions')">Lihat Semua</button>
+                            </div>
+                            <div class="session-list"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sessions View -->
+                <div id="sessions" class="view">
+                    <div class="view-header-actions">
+                        <div class="search-bar glass-input">
+                            <i class="ri-search-line"></i>
+                            <input type="text" placeholder="Cari pertemuan...">
+                        </div>
+                        <button class="btn btn-primary" id="btn-create-session">
+                            <i class="ri-add-line"></i> Buat Pertemuan
+                        </button>
+                    </div>
+                    <div class="table-container glass-card">
+                        <table class="data-table">
+                            <thead>
+                                <tr><th>Judul Pertemuan</th><th>Tanggal</th><th>Waktu</th><th>Status</th><th>Kehadiran</th><th>Aksi</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Students View -->
+                <div id="students" class="view">
+                    <div class="view-header-actions">
+                        <div class="search-bar glass-input">
+                            <i class="ri-search-line"></i>
+                            <input type="text" placeholder="Cari berdasarkan NIM atau Nama...">
+                        </div>
+                        <button class="btn btn-primary" onclick="app.navigateTo('face-registration')">
+                            <i class="ri-user-add-line"></i> Tambah Mahasiswa
+                        </button>
+                    </div>
+                    <div class="table-container glass-card">
+                        <table class="data-table">
+                            <thead>
+                                <tr><th>NIM</th><th>Nama</th><th>Kelas</th><th>Data Wajah</th><th>Aksi</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Face Registration View -->
+                <div id="face-registration" class="view">
+                    <div class="registration-layout">
+                        <div class="registration-form glass-card">
+                            <h2>Informasi Mahasiswa</h2>
+                            <p class="text-muted mb-4">Masukkan detail mahasiswa sebelum mengambil data wajah.</p>
+                            <div class="form-group">
+                                <label for="reg-nim">NIM</label>
+                                <input type="text" id="reg-nim" class="glass-input-field" placeholder="Masukkan NIM">
+                            </div>
+                            <div class="form-group">
+                                <label for="reg-name">Nama Lengkap</label>
+                                <input type="text" id="reg-name" class="glass-input-field" placeholder="Masukkan nama lengkap">
+                            </div>
+                            <div class="form-group">
+                                <label for="reg-class">Kelas/Grup</label>
+                                <input type="text" id="reg-class" class="glass-input-field" placeholder="mis., IF-1">
+                            </div>
+                            <div class="form-actions mt-4">
+                                <button class="btn btn-outline" onclick="app.navigateTo('students')">Batal</button>
+                                <button class="btn btn-primary" id="btn-proceed-capture">Lanjut Ambil Foto <i class="ri-arrow-right-line"></i></button>
+                            </div>
+                        </div>
+                        
+                        <div class="registration-capture glass-card disabled" id="reg-capture-section">
+                            <h2>Pengambilan Wajah</h2>
+                            <p class="text-muted mb-4">Ambil 3-5 foto untuk pengenalan yang akurat.</p>
+                            <div class="capture-viewfinder">
+                                <video id="reg-webcam" autoplay playsinline></video>
+                                <div class="camera-placeholder" id="reg-camera-placeholder">
+                                    <i class="ri-camera-off-line"></i>
+                                    <p>Isi form untuk mengaktifkan kamera</p>
+                                </div>
+                            </div>
+                            <div class="capture-progress">
+                                <span>Foto Diambil:</span>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar" style="width: 0%" id="capture-progress-bar"></div>
+                                </div>
+                                <span id="capture-count">0/5</span>
+                            </div>
+                            <button class="btn btn-primary btn-block" id="btn-capture-photo" disabled>
+                                <i class="ri-camera-lens-line"></i> Ambil Foto
+                            </button>
+                            <button class="btn btn-success btn-block mt-3" id="btn-save-registration" style="display: none;">
+                                <i class="ri-save-line"></i> Simpan Data Wajah
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div class="toast-container" id="toast-container"></div>
+    <script src="js/admin_v2.js"></script>
+</body>
+</html>

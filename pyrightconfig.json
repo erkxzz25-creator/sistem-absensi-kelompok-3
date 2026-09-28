@@ -1,0 +1,19 @@
+{
+    "pythonVersion": "3.12",
+    "pythonPlatform": "Windows",
+    "extraPaths": [
+        "C:\\Users\\LENOVO\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages"
+    ],
+    "typeCheckingMode": "off",
+    "reportMissingImports": false,
+    "reportMissingModuleSource": false,
+    "reportMissingTypeStubs": false,
+    "reportGeneralClassIssues": false,
+    "reportAttributeAccessIssue": false,
+    "reportCallIssue": false,
+    "reportDeprecated": false,
+    "reportOptionalMemberAccess": false,
+    "reportUnknownMemberType": false,
+    "reportUnknownVariableType": false,
+    "reportUnknownArgumentType": false
+}

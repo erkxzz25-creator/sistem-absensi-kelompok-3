@@ -1014,7 +1014,7 @@ h1, h2, h3, h4 {
 }
 
 /* ============================================================
-   RESPONSIVE MOBILE STYLES
+   RESPONSIVE MOBILE STYLES (Added for Mobile Support)
    ============================================================ */
 @media (max-width: 768px) {
     .app-container {
@@ -1028,16 +1028,16 @@ h1, h2, h3, h4 {
         bottom: 0;
         left: 0;
         z-index: 1000;
-        padding: 8px 5px;
-        padding-bottom: calc(8px + env(safe-area-inset-bottom, 15px));
+        padding: 10px 5px 30px 5px; /* Extra padding for iOS bottom safe area */
         border-right: none;
         border-top: 1px solid var(--border);
         flex-direction: row;
         justify-content: space-around;
-        background: rgba(15, 23, 42, 0.97);
-        backdrop-filter: blur(15px);
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(10px);
     }
 
+    /* Sembunyikan Logo, Label, dan Footer di HP (Fokus ke Navigasi Bawah) */
     .logo, .sidebar-footer, .nav-label {
         display: none !important;
     }
@@ -1046,154 +1046,47 @@ h1, h2, h3, h4 {
         flex-direction: row;
         width: 100%;
         justify-content: space-around;
-        gap: 0;
+        gap: 5px;
     }
 
     .nav-item {
         flex-direction: column;
-        padding: 6px 4px;
-        font-size: 0.65rem;
-        gap: 3px;
+        padding: 8px;
+        font-size: 0.75rem;
+        gap: 5px;
         justify-content: center;
         align-items: center;
         position: relative;
         cursor: pointer;
         touch-action: manipulation;
         z-index: 1001;
-        border-left: none !important;
-        border-radius: 8px;
-        flex: 1;
-    }
-
-    .nav-item.active {
-        background: rgba(99, 102, 241, 0.15);
-        border-left: none !important;
     }
 
     .nav-item i {
-        font-size: 1.3rem;
+        font-size: 1.5rem;
         margin-right: 0;
     }
     
     .nav-item .badge {
         position: absolute;
-        top: 0;
-        right: 10px;
-        font-size: 0.55rem;
-        padding: 1px 4px;
+        top: 2px;
+        right: 15px;
+        font-size: 0.6rem;
+        padding: 2px 4px;
     }
 
     .main-content {
-        padding: 12px;
-        padding-bottom: 85px;
+        padding: 15px;
+        padding-bottom: 90px; /* Ruang untuk bottom navbar */
     }
 
-    /* === TOPBAR === */
-    .topbar {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 5px;
-        margin-bottom: 15px;
-    }
-
-    .topbar h1 {
-        font-size: 1.3rem;
-    }
-
-    .topbar .subtitle {
-        font-size: 0.8rem;
-    }
-
-    /* === STATS GRID === */
-    .stats-grid {
+    .stats-grid, .dashboard-content-grid {
         grid-template-columns: 1fr;
-        gap: 10px;
     }
 
-    .stat-card {
-        padding: 12px 15px;
-    }
-
-    .stat-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 1.4rem;
-    }
-
-    .stat-number {
-        font-size: 1.4rem;
-    }
-
-    .stat-details h3 {
-        font-size: 0.8rem;
-    }
-
-    /* === DASHBOARD CONTENT === */
-    .dashboard-content-grid {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-
-    .card-header {
-        margin-bottom: 1rem;
-    }
-
-    .card-header h2 {
-        font-size: 1rem;
-    }
-
-    /* === SESSION ITEMS (Dashboard recent) === */
-    .session-item {
-        flex-wrap: wrap;
-        gap: 8px;
-        padding: 12px;
-    }
-
-    .session-date {
-        width: 42px;
-        height: 42px;
-        margin-right: 10px;
-        flex-shrink: 0;
-    }
-
-    .session-date .day {
-        font-size: 1rem;
-    }
-
-    .session-date .month {
-        font-size: 0.6rem;
-    }
-
-    .session-info {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .session-info h4 {
-        font-size: 0.9rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .session-info p {
-        font-size: 0.75rem;
-    }
-
-    .session-status {
-        font-size: 0.7rem;
-        padding: 2px 6px;
-        margin-right: 5px;
-    }
-
-    .session-attendance {
-        font-size: 0.95rem;
-    }
-
-    /* === VIEW HEADER ACTIONS (search + button) === */
     .view-header-actions {
         flex-direction: column;
-        gap: 10px;
+        gap: 15px;
         align-items: stretch;
     }
     
@@ -1206,68 +1099,29 @@ h1, h2, h3, h4 {
         justify-content: center;
     }
 
-    /* === TABLES → CARD LAYOUT === */
     .table-container {
-        overflow-x: visible;
-        white-space: normal;
+        overflow-x: auto;
+        white-space: nowrap;
     }
-
-    .data-table thead {
-        display: none;
-    }
-
-    .data-table,
-    .data-table tbody,
-    .data-table tr,
-    .data-table td {
-        display: block;
-        width: 100%;
-    }
-
-    .data-table tr {
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 12px 15px;
-        margin-bottom: 10px;
-    }
-
-    .data-table td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 6px 0;
-        border-bottom: 1px solid rgba(255,255,255,0.04);
+    
+    .data-table th, .data-table td {
+        padding: 0.75rem 0.5rem;
         font-size: 0.85rem;
     }
 
-    .data-table td:last-child {
-        border-bottom: none;
-        justify-content: flex-end;
-        padding-top: 10px;
-    }
-
-    .data-table td::before {
-        content: attr(data-label);
-        font-weight: 600;
-        font-size: 0.8rem;
-        color: var(--text-muted);
-        margin-right: 10px;
-        flex-shrink: 0;
-    }
-
-    .student-name-cell {
-        justify-content: flex-end;
-    }
-
-    /* === CAMERA === */
     .camera-viewfinder video {
         width: 100%;
         height: auto;
         border-radius: 10px;
     }
     
-    /* === REGISTRATION === */
+    .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
     .registration-layout {
         grid-template-columns: 1fr;
     }
@@ -1277,7 +1131,6 @@ h1, h2, h3, h4 {
         height: auto;
     }
     
-    /* === HISTORY === */
     .history-search {
         flex-direction: column;
         text-align: center;
@@ -1296,10 +1149,5 @@ h1, h2, h3, h4 {
         margin-top: 15px;
         width: 100%;
         justify-content: space-between;
-    }
-
-    /* === GLASS CARD spacing === */
-    .glass-card {
-        padding: 15px;
     }
 }
