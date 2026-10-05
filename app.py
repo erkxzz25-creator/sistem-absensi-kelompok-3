@@ -2,6 +2,11 @@
 FaceSync — Aplikasi Sistem Absensi berbasis Face Recognition.
 File utama Flask server (app.py).
 
+Revisi v2:
+- Jadwal kuliah mingguan otomatis (menggantikan sesi manual)
+- Auto-detect sesi aktif berdasarkan hari & jam
+- Recognize endpoint otomatis mendeteksi sesi
+
 Arsitektur sesuai PRD Bab 5:
 - Browser menangkap gambar via webcam (getUserMedia)
 - Backend (Flask) memproses face detection & recognition
@@ -19,9 +24,10 @@ import numpy as np
 from PIL import Image
 from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
+from sqlalchemy import inspect as sa_inspect, text
 
 from config import Config
-from models import db, Mahasiswa, Pertemuan, Absensi
+from models import db, Jadwal, Mahasiswa, Pertemuan, Absensi
 
 # Coba import face_recognition (membutuhkan dlib terinstall)
 try:
@@ -59,9 +65,20 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['EXPORT_FOLDER'], exist_ok=True)
 
 
-# Buat tabel database saat aplikasi pertama kali dijalankan
+# Buat tabel database & jalankan migrasi
 with app.app_context():
     db.create_all()
+    # Migrasi: tambahkan kolom jadwal_id ke tabel pertemuan jika belum ada
+    try:
+        inspector = sa_inspect(db.engine)
+        columns = [c['name'] for c in inspector.get_columns('pertemuan')]
+        if 'jadwal_id' not in columns:
+            with db.engine.connect() as conn:
+                conn.execute(text("ALTER TABLE pertemuan ADD COLUMN jadwal_id INTEGER REFERENCES jadwal(id)"))
+                conn.commit()
+            print("[MIGRASI] Kolom jadwal_id berhasil ditambahkan ke tabel pertemuan.")
+    except Exception as e:
+        print(f"[MIGRASI] Info: {e}")
 
 
 # ============================================================
@@ -89,6 +106,51 @@ def save_base64_image(base64_string, filepath):
         f.write(image_bytes)
 
 
+def get_active_jadwal_and_session():
+    """
+    Cek hari & waktu saat ini, temukan jadwal yang cocok,
+    dan otomatis buat/buka pertemuan jika belum ada.
+    Returns: (jadwal, pertemuan) atau (None, None)
+    """
+    now = datetime.now()
+    current_day = now.weekday()  # 0=Senin, 1=Selasa, ..., 6=Minggu
+    current_time = now.time()
+
+    # Cari jadwal yang cocok dengan hari & waktu saat ini
+    jadwal_list = Jadwal.query.filter_by(hari=current_day).all()
+    active_jadwal = None
+    for j in jadwal_list:
+        if j.jam_mulai <= current_time <= j.jam_selesai:
+            active_jadwal = j
+            break
+
+    if not active_jadwal:
+        return None, None
+
+    # Cek apakah pertemuan sudah ada untuk jadwal ini hari ini
+    today = now.date()
+    pertemuan = Pertemuan.query.filter_by(jadwal_id=active_jadwal.id, tanggal=today).first()
+
+    if not pertemuan:
+        # Otomatis buat pertemuan baru
+        pertemuan = Pertemuan(
+            judul=active_jadwal.mata_kuliah,
+            tanggal=today,
+            jam_mulai=active_jadwal.jam_mulai,
+            jam_selesai=active_jadwal.jam_selesai,
+            status_sesi='buka',
+            jadwal_id=active_jadwal.id
+        )
+        db.session.add(pertemuan)
+        db.session.commit()
+    elif pertemuan.status_sesi == 'tutup':
+        # Buka kembali jika masih dalam waktu
+        pertemuan.status_sesi = 'buka'
+        db.session.commit()
+
+    return active_jadwal, pertemuan
+
+
 # ============================================================
 # Route: Serve Frontend
 # ============================================================
@@ -103,6 +165,157 @@ def serve_index():
 def serve_admin():
     """Menyajikan halaman admin (admin.html)."""
     return send_from_directory('.', 'admin.html')
+
+
+# ============================================================
+# API: Jadwal Kuliah (CRUD) — Revisi v2
+# ============================================================
+
+@app.route('/api/jadwal', methods=['GET'])
+def get_jadwal():
+    """Mengambil seluruh jadwal kuliah, diurutkan per hari lalu jam."""
+    jadwal_list = Jadwal.query.order_by(Jadwal.hari, Jadwal.jam_mulai).all()
+    return jsonify({
+        'success': True,
+        'data': [j.to_dict() for j in jadwal_list],
+        'total': len(jadwal_list)
+    })
+
+
+@app.route('/api/jadwal', methods=['POST'])
+def create_jadwal():
+    """Membuat jadwal kuliah baru."""
+    data = request.get_json()
+
+    hari = data.get('hari')
+    jam_mulai_str = data.get('jam_mulai', '')
+    jam_selesai_str = data.get('jam_selesai', '')
+    mata_kuliah = data.get('mata_kuliah', '').strip()
+    dosen = data.get('dosen', '').strip()
+    ruangan = data.get('ruangan', '').strip()
+
+    if hari is None or not jam_mulai_str or not jam_selesai_str or not mata_kuliah:
+        return jsonify({'success': False, 'message': 'Hari, jam mulai, jam selesai, dan mata kuliah wajib diisi.'}), 400
+
+    try:
+        hari = int(hari)
+        jam_mulai = datetime.strptime(jam_mulai_str, '%H:%M').time()
+        jam_selesai = datetime.strptime(jam_selesai_str, '%H:%M').time()
+    except (ValueError, TypeError):
+        return jsonify({'success': False, 'message': 'Format hari atau waktu tidak valid.'}), 400
+
+    if hari < 0 or hari > 6:
+        return jsonify({'success': False, 'message': 'Hari harus antara 0 (Senin) sampai 6 (Minggu).'}), 400
+
+    new_jadwal = Jadwal(
+        hari=hari,
+        jam_mulai=jam_mulai,
+        jam_selesai=jam_selesai,
+        mata_kuliah=mata_kuliah,
+        dosen=dosen or None,
+        ruangan=ruangan or None
+    )
+    db.session.add(new_jadwal)
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'message': f'Jadwal "{mata_kuliah}" berhasil ditambahkan.',
+        'data': new_jadwal.to_dict()
+    }), 201
+
+
+@app.route('/api/jadwal/<int:jadwal_id>', methods=['PUT'])
+def update_jadwal(jadwal_id):
+    """Update jadwal kuliah."""
+    jadwal = Jadwal.query.get_or_404(jadwal_id)
+    data = request.get_json()
+
+    if 'hari' in data:
+        jadwal.hari = int(data['hari'])
+    if 'jam_mulai' in data:
+        jadwal.jam_mulai = datetime.strptime(data['jam_mulai'], '%H:%M').time()
+    if 'jam_selesai' in data:
+        jadwal.jam_selesai = datetime.strptime(data['jam_selesai'], '%H:%M').time()
+    if 'mata_kuliah' in data:
+        jadwal.mata_kuliah = data['mata_kuliah'].strip()
+    if 'dosen' in data:
+        jadwal.dosen = data['dosen'].strip() or None
+    if 'ruangan' in data:
+        jadwal.ruangan = data['ruangan'].strip() or None
+
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Jadwal berhasil diperbarui.', 'data': jadwal.to_dict()})
+
+
+@app.route('/api/jadwal/<int:jadwal_id>', methods=['DELETE'])
+def delete_jadwal(jadwal_id):
+    """Menghapus jadwal kuliah."""
+    jadwal = Jadwal.query.get_or_404(jadwal_id)
+    mata_kuliah = jadwal.mata_kuliah
+    db.session.delete(jadwal)
+    db.session.commit()
+    return jsonify({'success': True, 'message': f'Jadwal "{mata_kuliah}" berhasil dihapus.'})
+
+
+# ============================================================
+# API: Sesi Aktif Otomatis — Revisi v2
+# ============================================================
+
+@app.route('/api/active-session', methods=['GET'])
+def get_active_session():
+    """
+    Cek jadwal yang sedang berlangsung saat ini.
+    Otomatis membuat pertemuan baru jika belum ada untuk hari ini.
+    Digunakan oleh halaman mahasiswa untuk auto-detect kelas.
+    """
+    jadwal, pertemuan = get_active_jadwal_and_session()
+
+    if not jadwal or not pertemuan:
+        # Tidak ada kelas saat ini, cari jadwal berikutnya
+        now = datetime.now()
+        current_day = now.weekday()
+        current_time = now.time()
+
+        next_jadwal = None
+        # Cari di hari yang sama (setelah waktu saat ini)
+        today_remaining = Jadwal.query.filter(
+            Jadwal.hari == current_day,
+            Jadwal.jam_mulai > current_time
+        ).order_by(Jadwal.jam_mulai).first()
+
+        if today_remaining:
+            next_jadwal = today_remaining
+        else:
+            # Cari di hari-hari berikutnya
+            for offset in range(1, 8):
+                next_day = (current_day + offset) % 7
+                first_on_day = Jadwal.query.filter_by(hari=next_day).order_by(Jadwal.jam_mulai).first()
+                if first_on_day:
+                    next_jadwal = first_on_day
+                    break
+
+        response = {
+            'success': True,
+            'active': False,
+            'message': 'Tidak ada kelas yang berlangsung saat ini.'
+        }
+        if next_jadwal:
+            response['next_jadwal'] = next_jadwal.to_dict()
+
+        return jsonify(response)
+
+    hadir_count = Absensi.query.filter_by(pertemuan_id=pertemuan.id, status='hadir').count()
+    total_students = Mahasiswa.query.count()
+
+    return jsonify({
+        'success': True,
+        'active': True,
+        'session': pertemuan.to_dict(),
+        'jadwal': jadwal.to_dict(),
+        'hadir_count': hadir_count,
+        'total_students': total_students
+    })
 
 
 # ============================================================
@@ -235,12 +448,12 @@ def delete_student(student_id):
 
 
 # ============================================================
-# API: Pertemuan (Manajemen Sesi) — PRD Fase 1 & 2
+# API: Pertemuan / Riwayat Sesi — PRD Fase 1 & 2
 # ============================================================
 
 @app.route('/api/sessions', methods=['GET'])
 def get_sessions():
-    """Mengambil daftar seluruh pertemuan."""
+    """Mengambil daftar seluruh pertemuan (termasuk yang dibuat otomatis)."""
     sessions = Pertemuan.query.order_by(Pertemuan.tanggal.desc(), Pertemuan.jam_mulai.desc()).all()
     result = []
     for session in sessions:
@@ -255,43 +468,6 @@ def get_sessions():
     return jsonify({'success': True, 'data': result, 'total': len(result)})
 
 
-@app.route('/api/sessions', methods=['POST'])
-def create_session():
-    """Membuat pertemuan/sesi baru."""
-    data = request.get_json()
-
-    judul = data.get('judul', '').strip()
-    tanggal_str = data.get('tanggal', '')
-    jam_mulai_str = data.get('jam_mulai', '')
-    jam_selesai_str = data.get('jam_selesai', '')
-
-    if not judul or not tanggal_str or not jam_mulai_str or not jam_selesai_str:
-        return jsonify({'success': False, 'message': 'Semua field wajib diisi.'}), 400
-
-    try:
-        tanggal = datetime.strptime(tanggal_str, '%Y-%m-%d').date()
-        jam_mulai = datetime.strptime(jam_mulai_str, '%H:%M').time()
-        jam_selesai = datetime.strptime(jam_selesai_str, '%H:%M').time()
-    except ValueError:
-        return jsonify({'success': False, 'message': 'Format tanggal atau waktu tidak valid.'}), 400
-
-    new_session = Pertemuan(
-        judul=judul,
-        tanggal=tanggal,
-        jam_mulai=jam_mulai,
-        jam_selesai=jam_selesai,
-        status_sesi='tutup'
-    )
-    db.session.add(new_session)
-    db.session.commit()
-
-    return jsonify({
-        'success': True,
-        'message': f'Pertemuan "{judul}" berhasil dibuat.',
-        'data': new_session.to_dict()
-    }), 201
-
-
 @app.route('/api/sessions/<int:session_id>', methods=['DELETE'])
 def delete_session(session_id):
     """Menghapus pertemuan beserta catatan absensinya."""
@@ -299,30 +475,6 @@ def delete_session(session_id):
     db.session.delete(session)
     db.session.commit()
     return jsonify({'success': True, 'message': f'Pertemuan "{session.judul}" berhasil dihapus.'})
-
-
-@app.route('/api/sessions/<int:session_id>/status', methods=['PUT'])
-def toggle_session_status(session_id):
-    """
-    Membuka/menutup sesi absensi.
-    PRD Fase 2: Dosen mengaktifkan sesi absensi untuk pertemuan tertentu.
-    """
-    session = Pertemuan.query.get_or_404(session_id)
-    data = request.get_json()
-
-    new_status = data.get('status_sesi', '')
-    if new_status not in ['buka', 'tutup']:
-        return jsonify({'success': False, 'message': 'Status harus "buka" atau "tutup".'}), 400
-
-    session.status_sesi = new_status
-    db.session.commit()
-
-    status_text = 'dibuka' if new_status == 'buka' else 'ditutup'
-    return jsonify({
-        'success': True,
-        'message': f'Sesi "{session.judul}" berhasil {status_text}.',
-        'data': session.to_dict()
-    })
 
 
 # ============================================================
@@ -333,24 +485,31 @@ def toggle_session_status(session_id):
 def recognize_face():
     """
     Endpoint utama pengenalan wajah.
-    PRD Fase 2: Deteksi & Pencocokan Wajah Real-time.
+    Revisi v2: Otomatis mendeteksi sesi aktif dari jadwal jika session_id tidak diberikan.
 
     Menerima frame base64 dari webcam browser, mendeteksi wajah,
     mencocokkan dengan face encoding tersimpan, dan mencatat kehadiran.
     """
     data = request.get_json()
     image_base64 = data.get('image', '')
-    session_id = data.get('session_id')
+    session_id = data.get('session_id')  # Opsional di v2
 
-    if not image_base64 or not session_id:
-        return jsonify({'success': False, 'message': 'Image dan session_id diperlukan.'}), 400
+    if not image_base64:
+        return jsonify({'success': False, 'message': 'Image diperlukan.'}), 400
 
-    # Validasi sesi
-    session = Pertemuan.query.get(session_id)
-    if not session:
-        return jsonify({'success': False, 'message': 'Sesi tidak ditemukan.'}), 404
-    if session.status_sesi != 'buka':
-        return jsonify({'success': False, 'message': 'Sesi absensi belum dibuka.'}), 403
+    # Jika session_id tidak diberikan, auto-detect dari jadwal
+    if not session_id:
+        _, pertemuan = get_active_jadwal_and_session()
+        if not pertemuan:
+            return jsonify({'success': False, 'message': 'Tidak ada sesi aktif saat ini.'}), 404
+        session_id = pertemuan.id
+    else:
+        # Validasi sesi yang diberikan
+        pertemuan = Pertemuan.query.get(session_id)
+        if not pertemuan:
+            return jsonify({'success': False, 'message': 'Sesi tidak ditemukan.'}), 404
+        if pertemuan.status_sesi != 'buka':
+            return jsonify({'success': False, 'message': 'Sesi absensi belum dibuka.'}), 403
 
     if not FACE_RECOGNITION_AVAILABLE:
         return jsonify({'success': False, 'message': 'Library face_recognition tidak tersedia di server.'}), 503
@@ -400,7 +559,7 @@ def recognize_face():
 
         if best_distance <= tolerance:
             matched_student = known_students[best_match_idx]
-            confidence = round((1 - best_distance) * 100, 2)
+            confidence = float(round((1 - best_distance) * 100, 2))
 
             # PRD: Pencegahan Duplikasi Absen
             # Cek apakah mahasiswa sudah tercatat hadir di sesi ini
@@ -423,7 +582,7 @@ def recognize_face():
                 new_absensi = Absensi(
                     mahasiswa_id=matched_student.id,
                     pertemuan_id=session_id,
-                    waktu_absen=datetime.utcnow(),
+                    waktu_absen=datetime.now(),
                     status='hadir',
                     confidence_score=confidence
                 )
@@ -456,6 +615,7 @@ def get_dashboard_stats():
     """Statistik ringkasan untuk halaman Dashboard."""
     total_students = Mahasiswa.query.count()
     total_sessions = Pertemuan.query.count()
+    total_jadwal = Jadwal.query.count()
 
     # Hitung rata-rata kehadiran
     if total_sessions > 0 and total_students > 0:
@@ -469,6 +629,7 @@ def get_dashboard_stats():
         'data': {
             'total_students': total_students,
             'total_sessions': total_sessions,
+            'total_jadwal': total_jadwal,
             'avg_attendance': avg_attendance
         }
     })
@@ -660,8 +821,9 @@ def get_session_attendance(session_id):
 
 if __name__ == '__main__':
     print("\n" + "=" * 50)
-    print("  FaceSync - Sistem Absensi Pintar")
+    print("  FaceSync - Sistem Absensi Pintar v2")
     print("  Face Recognition: ", "Aktif [OK]" if FACE_RECOGNITION_AVAILABLE else "Tidak Tersedia [X]")
+    print("  Jadwal Otomatis  : Aktif [OK]")
     print("=" * 50)
     print(f"  Server berjalan di: http://localhost:5000")
     print("=" * 50 + "\n")

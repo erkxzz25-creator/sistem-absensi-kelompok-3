@@ -4,16 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FaceSync - Portal Mahasiswa</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css?v=3">
+    <link rel="stylesheet" href="css/styles.css?v=10">
 </head>
 <body>
     <div class="app-container">
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
             <div class="logo">
-                <div class="logo-icon"><i class="ri-focus-3-line"></i></div>
                 <span>FaceSync Portal</span>
             </div>
             
@@ -43,18 +42,43 @@
             <header class="topbar">
                 <div class="page-title">
                     <h1 id="current-page-title">Absensi Wajah</h1>
-                    <p class="subtitle" id="current-page-subtitle">Sesi pengenalan wajah otomatis</p>
+                    <p class="subtitle" id="current-page-subtitle">Deteksi wajah otomatis secara real-time</p>
                 </div>
             </header>
 
             <div class="views-container">
                 <!-- Live Attendance View -->
                 <div id="live-attendance" class="view active">
-                    <div class="live-attendance-container">
+                    <!-- Class Info Banner -->
+                    <div class="class-info-banner glass-card" id="class-info-banner" style="display:none;">
+                        <div class="class-info-icon">
+                            <i class="ri-book-open-line"></i>
+                        </div>
+                        <div class="class-info-details">
+                            <h3 id="current-matkul">Mata Kuliah</h3>
+                            <div class="class-meta">
+                                <span><i class="ri-user-star-line"></i> <span id="current-dosen">-</span></span>
+                                <span><i class="ri-map-pin-line"></i> <span id="current-ruangan">-</span></span>
+                                <span><i class="ri-time-line"></i> <span id="current-waktu">-</span></span>
+                            </div>
+                        </div>
+                        <div class="class-info-count">
+                            <span class="badge badge-success" id="live-hadir-count">0 Hadir</span>
+                        </div>
+                    </div>
+
+                    <!-- No Class State -->
+                    <div class="no-class-state glass-card" id="no-class-state" style="display:none;">
+                        <i class="ri-calendar-close-line"></i>
+                        <h2>Tidak Ada Kelas Saat Ini</h2>
+                        <p id="next-class-info">Jadwal berikutnya akan dimulai sesuai waktu yang ditentukan.</p>
+                    </div>
+
+                    <div class="live-attendance-container" id="attendance-container" style="display:none;">
                         <div class="camera-section glass-card">
                             <div class="camera-header">
-                                <h2 id="session-title-header">Memeriksa Sesi Aktif...</h2>
-                                <div class="camera-status live"><span class="dot"></span> Deteksi Langsung</div>
+                                <h2 id="session-title-header">Mendeteksi Wajah...</h2>
+                                <div class="camera-status live"><span class="dot"></span> Scanning</div>
                             </div>
                             
                             <div class="camera-viewfinder" id="camera-viewfinder">
@@ -66,19 +90,6 @@
                                         <span class="bl"></span><span class="br"></span>
                                     </div>
                                 </div>
-                                <div class="camera-placeholder" id="camera-placeholder">
-                                    <i class="ri-camera-off-line"></i>
-                                    <p>Kamera sedang mati</p>
-                                    <button class="btn btn-primary mt-3" id="btn-start-camera">
-                                        <i class="ri-play-line"></i> Mulai Absen
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div class="camera-controls">
-                                <button class="btn btn-danger btn-block" id="btn-stop-session">
-                                    <i class="ri-stop-circle-line"></i> Hentikan Kamera
-                                </button>
                             </div>
                         </div>
                         
@@ -134,7 +145,7 @@
                         <div class="table-container">
                             <table class="data-table">
                                 <thead>
-                                    <tr><th>Tanggal</th><th>Sesi</th><th>Waktu Tercatat</th><th>Status</th></tr>
+                                    <tr><th>Tanggal</th><th>Mata Kuliah</th><th>Waktu Tercatat</th><th>Status</th></tr>
                                 </thead>
                                 <tbody></tbody>
                             </table>
@@ -143,6 +154,29 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- Success Overlay (Full Screen) -->
+    <div class="success-overlay" id="success-overlay" style="display:none;">
+        <div class="success-overlay-content">
+            <div class="success-check-icon">
+                <i class="ri-checkbox-circle-fill"></i>
+            </div>
+            <h1>Absensi Berhasil!</h1>
+            <p class="success-student-name" id="success-student-name"></p>
+            <p class="success-matkul" id="success-matkul-name"></p>
+        </div>
+    </div>
+
+    <!-- Already Recorded Overlay -->
+    <div class="already-overlay" id="already-overlay" style="display:none;">
+        <div class="success-overlay-content">
+            <div class="success-check-icon already">
+                <i class="ri-information-line"></i>
+            </div>
+            <h1>Sudah Tercatat Hadir</h1>
+            <p class="success-student-name" id="already-student-name"></p>
+        </div>
     </div>
 
     <!-- Notification Toast -->

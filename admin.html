@@ -4,16 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FaceSync Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css?v=7">
+    <link rel="stylesheet" href="css/styles.css?v=13">
 </head>
 <body>
     <div class="app-container">
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
             <div class="logo">
-                <div class="logo-icon"><i class="ri-focus-3-line"></i></div>
                 <span>FaceSync Admin</span>
             </div>
             
@@ -23,9 +22,13 @@
                     <i class="ri-dashboard-line"></i>
                     <span>Dashboard</span>
                 </button>
-                <button class="nav-item" data-target="sessions" onclick="app.navigateTo('sessions')">
+                <button class="nav-item" data-target="jadwal" onclick="app.navigateTo('jadwal')">
                     <i class="ri-calendar-event-line"></i>
-                    <span>Pertemuan</span>
+                    <span>Jadwal Kuliah</span>
+                </button>
+                <button class="nav-item" data-target="riwayat" onclick="app.navigateTo('riwayat')">
+                    <i class="ri-history-line"></i>
+                    <span>Riwayat Pertemuan</span>
                 </button>
                 <button class="nav-item" data-target="students" onclick="app.navigateTo('students')">
                     <i class="ri-group-line"></i>
@@ -79,34 +82,52 @@
                                 <p class="stat-number">0</p>
                             </div>
                         </div>
+                        <div class="stat-card glass-card">
+                            <div class="stat-icon amber"><i class="ri-calendar-event-line"></i></div>
+                            <div class="stat-details">
+                                <h3>Jadwal Kuliah</h3>
+                                <p class="stat-number">0</p>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="dashboard-content-grid">
                         <div class="recent-sessions glass-card">
                             <div class="card-header">
                                 <h2>Pertemuan Terakhir</h2>
-                                <button class="btn-text" onclick="app.navigateTo('sessions')">Lihat Semua</button>
+                                <button class="btn-text" onclick="app.navigateTo('riwayat')">Lihat Semua</button>
                             </div>
                             <div class="session-list"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Sessions View -->
-                <div id="sessions" class="view">
+                <!-- Jadwal Kuliah View -->
+                <div id="jadwal" class="view">
                     <div class="view-header-actions">
-                        <div class="search-bar glass-input">
-                            <i class="ri-search-line"></i>
-                            <input type="text" placeholder="Cari pertemuan...">
-                        </div>
-                        <button class="btn btn-primary" id="btn-create-session">
-                            <i class="ri-add-line"></i> Buat Pertemuan
+                        <h2 style="margin:0; font-size: 1.1rem; color: var(--text-secondary); display: flex; align-items: center; gap: 8px;">
+                            <i class="ri-calendar-event-line" style="color: var(--primary); font-size: 1.4rem;"></i>
+                            Atur jadwal mingguan berulang untuk kelas Anda
+                        </h2>
+                        <button class="btn btn-primary" id="btn-add-jadwal" onclick="showJadwalModal()">
+                            <i class="ri-add-line"></i> Tambah Jadwal
                         </button>
+                    </div>
+                    <div id="jadwal-container"></div>
+                </div>
+
+                <!-- Riwayat Pertemuan View -->
+                <div id="riwayat" class="view">
+                    <div class="view-header-actions">
+                        <h2 style="margin:0; font-size: 1.1rem; color: var(--text-secondary); display: flex; align-items: center; gap: 8px;">
+                            <i class="ri-history-line" style="color: var(--primary); font-size: 1.4rem;"></i>
+                            Pertemuan yang dibuat otomatis oleh sistem
+                        </h2>
                     </div>
                     <div class="table-container glass-card">
                         <table class="data-table">
                             <thead>
-                                <tr><th>Judul Pertemuan</th><th>Tanggal</th><th>Waktu</th><th>Status</th><th>Kehadiran</th><th>Aksi</th></tr>
+                                <tr><th>Mata Kuliah</th><th>Tanggal</th><th>Waktu</th><th>Status</th><th>Kehadiran</th><th>Aksi</th></tr>
                             </thead>
                             <tbody></tbody>
                         </table>
@@ -187,7 +208,86 @@
             </div>
         </main>
     </div>
+
+    <!-- Modal Tambah Jadwal -->
+    <div class="modal-overlay" id="jadwal-modal" style="display:none;" onclick="closeJadwalModal(event)">
+        <div class="modal-content glass-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2><i class="ri-calendar-event-line"></i> Tambah Jadwal Kuliah</h2>
+                <button class="icon-btn-small" onclick="closeJadwalModal()"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="jadwal-hari">Hari</label>
+                    <select id="jadwal-hari" class="glass-input-field">
+                        <option value="0">Senin</option>
+                        <option value="1">Selasa</option>
+                        <option value="2">Rabu</option>
+                        <option value="3">Kamis</option>
+                        <option value="4">Jumat</option>
+                        <option value="5">Sabtu</option>
+                        <option value="6">Minggu</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="jadwal-mulai">Jam Mulai</label>
+                        <input type="time" id="jadwal-mulai" class="glass-input-field" value="07:30">
+                    </div>
+                    <div class="form-group">
+                        <label for="jadwal-selesai">Jam Selesai</label>
+                        <input type="time" id="jadwal-selesai" class="glass-input-field" value="10:05">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="jadwal-matkul">Mata Kuliah</label>
+                    <input type="text" id="jadwal-matkul" class="glass-input-field" placeholder="mis., Kecerdasan Buatan">
+                </div>
+                <div class="form-group">
+                    <label for="jadwal-dosen">Dosen</label>
+                    <input type="text" id="jadwal-dosen" class="glass-input-field" placeholder="mis., Prof. Ma'ruf Idris & Pak Sirwan">
+                </div>
+                <div class="form-group">
+                    <label for="jadwal-ruangan">Ruangan</label>
+                    <input type="text" id="jadwal-ruangan" class="glass-input-field" placeholder="mis., Lab Komputer">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeJadwalModal()">Batal</button>
+                <button class="btn btn-primary" id="btn-save-jadwal" onclick="saveJadwal()">
+                    <i class="ri-save-line"></i> Simpan Jadwal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Detail Modal -->
+    <div class="modal-overlay" id="session-detail-modal" style="display:none;" onclick="closeSessionDetail(event)">
+        <div class="modal-content glass-card session-detail-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2><i class="ri-file-list-3-line"></i> <span id="detail-title">Detail Pertemuan</span></h2>
+                <button class="icon-btn-small" onclick="closeSessionDetail()"><i class="ri-close-line"></i></button>
+            </div>
+
+            <!-- Session Info Cards -->
+            <div class="detail-info-grid" id="detail-info-grid">
+                <!-- Filled by JS -->
+            </div>
+
+            <!-- Attendance List -->
+            <div class="detail-section">
+                <div class="detail-section-header">
+                    <h3><i class="ri-group-line"></i> Daftar Kehadiran</h3>
+                    <span class="badge badge-success" id="detail-hadir-count">0 Hadir</span>
+                </div>
+                <div id="detail-attendance-list" class="detail-attendance-list">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="toast-container" id="toast-container"></div>
-    <script src="js/admin_v2.js"></script>
+    <script src="js/admin_v2.js?v=3"></script>
 </body>
 </html>

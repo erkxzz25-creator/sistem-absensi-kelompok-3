@@ -1,12 +1,48 @@
 """
 Model database menggunakan SQLAlchemy ORM.
 Skema mengikuti PRD Bab 6 — Database Schema.
+Revisi v2: Tambah model Jadwal untuk jadwal kuliah mingguan otomatis.
 """
 
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date, time
 
 db = SQLAlchemy()
+
+
+class Jadwal(db.Model):
+    """
+    Tabel jadwal — menyimpan jadwal kuliah mingguan berulang.
+    Admin mengatur sekali, sistem otomatis membuat pertemuan sesuai jadwal.
+    """
+    __tablename__ = 'jadwal'
+
+    id = db.Column(db.Integer, primary_key=True)
+    hari = db.Column(db.Integer, nullable=False)  # 0=Senin, 1=Selasa, ..., 6=Minggu
+    jam_mulai = db.Column(db.Time, nullable=False)
+    jam_selesai = db.Column(db.Time, nullable=False)
+    mata_kuliah = db.Column(db.String(200), nullable=False)
+    dosen = db.Column(db.String(200), nullable=True)
+    ruangan = db.Column(db.String(100), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relasi ke tabel pertemuan
+    pertemuan_records = db.relationship('Pertemuan', backref='jadwal', lazy=True)
+
+    HARI_NAMA = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu']
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'hari': self.hari,
+            'hari_nama': self.HARI_NAMA[self.hari] if 0 <= self.hari <= 6 else 'Unknown',
+            'jam_mulai': self.jam_mulai.strftime('%H:%M') if self.jam_mulai else None,
+            'jam_selesai': self.jam_selesai.strftime('%H:%M') if self.jam_selesai else None,
+            'mata_kuliah': self.mata_kuliah,
+            'dosen': self.dosen,
+            'ruangan': self.ruangan,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
 
 
 class Mahasiswa(db.Model):
@@ -41,8 +77,8 @@ class Mahasiswa(db.Model):
 
 class Pertemuan(db.Model):
     """
-    Tabel pertemuan — menyimpan jadwal dan status sesi.
-    Sesuai PRD: id, judul, tanggal, jam_mulai, jam_selesai, status_sesi
+    Tabel pertemuan — menyimpan sesi pertemuan (sekarang dibuat otomatis dari jadwal).
+    Revisi v2: Ditambahkan jadwal_id untuk menghubungkan ke jadwal mingguan.
     """
     __tablename__ = 'pertemuan'
 
@@ -52,21 +88,28 @@ class Pertemuan(db.Model):
     jam_mulai = db.Column(db.Time, nullable=False)
     jam_selesai = db.Column(db.Time, nullable=False)
     status_sesi = db.Column(db.String(10), nullable=False, default='tutup')  # 'buka' atau 'tutup'
+    jadwal_id = db.Column(db.Integer, db.ForeignKey('jadwal.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relasi ke tabel absensi
     absensi_records = db.relationship('Absensi', backref='pertemuan', lazy=True, cascade='all, delete-orphan')
 
     def to_dict(self):
-        return {
+        result = {
             'id': self.id,
             'judul': self.judul,
             'tanggal': self.tanggal.isoformat() if self.tanggal else None,
             'jam_mulai': self.jam_mulai.strftime('%H:%M') if self.jam_mulai else None,
             'jam_selesai': self.jam_selesai.strftime('%H:%M') if self.jam_selesai else None,
             'status_sesi': self.status_sesi,
+            'jadwal_id': getattr(self, 'jadwal_id', None),
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+        # Tambahkan info jadwal jika ada
+        if hasattr(self, 'jadwal') and self.jadwal:
+            result['dosen'] = self.jadwal.dosen
+            result['ruangan'] = self.jadwal.ruangan
+        return result
 
 
 class Absensi(db.Model):
