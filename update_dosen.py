@@ -21,6 +21,7 @@ def update_dosen():
         ("Bimbingan Karir", "Bimbingan Karir", "Mustamin, S.Pd., M.T., M.Pd. & Ir. Faisal Najamuddin, S.Pd., M.Eng., IPP")
     ]
 
+    conn = None
     try:
         conn = sqlite3.connect('database.db')
         cursor = conn.cursor()
@@ -38,7 +39,8 @@ def update_dosen():
     except Exception as e:
         print(f"Error: {e}")
     finally:
-        conn.close()
+        if conn:
+            conn.close()
 
 if __name__ == "__main__":
     update_dosen()

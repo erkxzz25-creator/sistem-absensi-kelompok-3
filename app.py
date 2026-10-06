@@ -106,14 +106,47 @@ def save_base64_image(base64_string, filepath):
         f.write(image_bytes)
 
 
+def ensure_today_sessions():
+    """
+    Buat pertemuan untuk SEMUA jadwal hari ini sekaligus.
+    Dipanggil saat halaman riwayat atau active-session diakses,
+    agar semua matkul hari ini muncul meskipun belum masuk jam-nya.
+    """
+    now = datetime.now()
+    today = now.date()
+    current_day = now.weekday()  # 0=Senin, 1=Selasa, ..., 6=Minggu
+
+    jadwal_list = Jadwal.query.filter_by(hari=current_day).all()
+    created = 0
+    for j in jadwal_list:
+        existing = Pertemuan.query.filter_by(jadwal_id=j.id, tanggal=today).first()
+        if not existing:
+            pertemuan = Pertemuan(
+                judul=j.mata_kuliah,
+                tanggal=today,
+                jam_mulai=j.jam_mulai,
+                jam_selesai=j.jam_selesai,
+                status_sesi='buka',
+                jadwal_id=j.id
+            )
+            db.session.add(pertemuan)
+            created += 1
+    if created > 0:
+        db.session.commit()
+    return created
+
+
 def get_active_jadwal_and_session():
     """
     Cek hari & waktu saat ini, temukan jadwal yang cocok,
     dan otomatis buat/buka pertemuan jika belum ada.
     Returns: (jadwal, pertemuan) atau (None, None)
     """
+    # Pastikan semua pertemuan hari ini sudah dibuat
+    ensure_today_sessions()
+
     now = datetime.now()
-    current_day = now.weekday()  # 0=Senin, 1=Selasa, ..., 6=Minggu
+    current_day = now.weekday()
     current_time = now.time()
 
     # Cari jadwal yang cocok dengan hari & waktu saat ini
@@ -127,23 +160,11 @@ def get_active_jadwal_and_session():
     if not active_jadwal:
         return None, None
 
-    # Cek apakah pertemuan sudah ada untuk jadwal ini hari ini
+    # Ambil pertemuan yang sudah pasti ada (dibuat oleh ensure_today_sessions)
     today = now.date()
     pertemuan = Pertemuan.query.filter_by(jadwal_id=active_jadwal.id, tanggal=today).first()
 
-    if not pertemuan:
-        # Otomatis buat pertemuan baru
-        pertemuan = Pertemuan(
-            judul=active_jadwal.mata_kuliah,
-            tanggal=today,
-            jam_mulai=active_jadwal.jam_mulai,
-            jam_selesai=active_jadwal.jam_selesai,
-            status_sesi='buka',
-            jadwal_id=active_jadwal.id
-        )
-        db.session.add(pertemuan)
-        db.session.commit()
-    elif pertemuan.status_sesi == 'tutup':
+    if pertemuan and pertemuan.status_sesi == 'tutup':
         # Buka kembali jika masih dalam waktu
         pertemuan.status_sesi = 'buka'
         db.session.commit()
@@ -454,6 +475,9 @@ def delete_student(student_id):
 @app.route('/api/sessions', methods=['GET'])
 def get_sessions():
     """Mengambil daftar seluruh pertemuan (termasuk yang dibuat otomatis)."""
+    # Pastikan semua pertemuan hari ini sudah dibuat
+    ensure_today_sessions()
+
     sessions = Pertemuan.query.order_by(Pertemuan.tanggal.desc(), Pertemuan.jam_mulai.desc()).all()
     result = []
     for session in sessions:
