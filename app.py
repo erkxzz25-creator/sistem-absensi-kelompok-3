@@ -804,10 +804,11 @@ def export_session_report(session_id):
     # Auto-width kolom
     for col in ws.columns:
         max_length = 0
-        col_letter = col[0].column_letter
+        # Gunakan cell di baris header (index 4 = baris 5) yang pasti bukan MergedCell
+        col_letter = col[4].column_letter
         for cell in col:
             try:
-                if len(str(cell.value)) > max_length:
+                if cell.value and len(str(cell.value)) > max_length:
                     max_length = len(str(cell.value))
             except:
                 pass
