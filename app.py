@@ -18,7 +18,7 @@ import base64
 import io
 import json
 import pickle
-from datetime import datetime, date, time
+from datetime import datetime, date, time, timedelta
 
 import numpy as np
 from PIL import Image
@@ -106,13 +106,18 @@ def save_base64_image(base64_string, filepath):
         f.write(image_bytes)
 
 
+def get_wita_time():
+    """Mengembalikan waktu saat ini dalam zona waktu WITA (UTC+8)."""
+    return datetime.utcnow() + timedelta(hours=8)
+
+
 def ensure_today_sessions():
     """
     Buat pertemuan untuk SEMUA jadwal hari ini sekaligus.
     Dipanggil saat halaman riwayat atau active-session diakses,
     agar semua matkul hari ini muncul meskipun belum masuk jam-nya.
     """
-    now = datetime.now()
+    now = get_wita_time()
     today = now.date()
     current_day = now.weekday()  # 0=Senin, 1=Selasa, ..., 6=Minggu
 
@@ -145,7 +150,7 @@ def get_active_jadwal_and_session():
     # Pastikan semua pertemuan hari ini sudah dibuat
     ensure_today_sessions()
 
-    now = datetime.now()
+    now = get_wita_time()
     current_day = now.weekday()
     current_time = now.time()
 
@@ -294,7 +299,7 @@ def get_active_session():
 
     if not jadwal or not pertemuan:
         # Tidak ada kelas saat ini, cari jadwal berikutnya
-        now = datetime.now()
+        now = get_wita_time()
         current_day = now.weekday()
         current_time = now.time()
 
@@ -606,7 +611,7 @@ def recognize_face():
                 new_absensi = Absensi(
                     mahasiswa_id=matched_student.id,
                     pertemuan_id=session_id,
-                    waktu_absen=datetime.now(),
+                    waktu_absen=get_wita_time(),
                     status='hadir',
                     confidence_score=confidence
                 )

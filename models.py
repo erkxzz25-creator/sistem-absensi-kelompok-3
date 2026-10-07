@@ -5,9 +5,13 @@ Revisi v2: Tambah model Jadwal untuk jadwal kuliah mingguan otomatis.
 """
 
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, date, time
+from datetime import datetime, date, time, timedelta
 
 db = SQLAlchemy()
+
+def get_wita_time():
+    """Mengembalikan waktu saat ini dalam zona waktu WITA (UTC+8)."""
+    return datetime.utcnow() + timedelta(hours=8)
 
 
 class Jadwal(db.Model):
@@ -24,7 +28,7 @@ class Jadwal(db.Model):
     mata_kuliah = db.Column(db.String(200), nullable=False)
     dosen = db.Column(db.String(200), nullable=True)
     ruangan = db.Column(db.String(100), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_wita_time)
 
     # Relasi ke tabel pertemuan
     pertemuan_records = db.relationship('Pertemuan', backref='jadwal', lazy=True)
@@ -58,7 +62,7 @@ class Mahasiswa(db.Model):
     kelas = db.Column(db.String(20), nullable=False)
     face_encoding = db.Column(db.PickleType, nullable=True)  # Menyimpan numpy array
     foto_path = db.Column(db.String(255), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_wita_time)
 
     # Relasi ke tabel absensi
     absensi_records = db.relationship('Absensi', backref='mahasiswa', lazy=True, cascade='all, delete-orphan')
@@ -89,7 +93,7 @@ class Pertemuan(db.Model):
     jam_selesai = db.Column(db.Time, nullable=False)
     status_sesi = db.Column(db.String(10), nullable=False, default='tutup')  # 'buka' atau 'tutup'
     jadwal_id = db.Column(db.Integer, db.ForeignKey('jadwal.id'), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_wita_time)
 
     # Relasi ke tabel absensi
     absensi_records = db.relationship('Absensi', backref='pertemuan', lazy=True, cascade='all, delete-orphan')
@@ -122,7 +126,7 @@ class Absensi(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     mahasiswa_id = db.Column(db.Integer, db.ForeignKey('mahasiswa.id'), nullable=False)
     pertemuan_id = db.Column(db.Integer, db.ForeignKey('pertemuan.id'), nullable=False)
-    waktu_absen = db.Column(db.DateTime, default=datetime.utcnow)
+    waktu_absen = db.Column(db.DateTime, default=get_wita_time)
     status = db.Column(db.String(20), nullable=False, default='hadir')  # hadir / alpa
     confidence_score = db.Column(db.Float, nullable=True)
 
